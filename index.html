@@ -58,7 +58,6 @@ function enterResult() {
 }
 
 function handleKeyPress(e) {
-    console.log(e.code, e.key);
     if (e.code == 'Escape') {
         e.preventDefault();
         document.getElementById('answer').textContent = '?';
