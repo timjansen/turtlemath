@@ -27,13 +27,7 @@
             }
             .sprite {
                 position: absolute;
-            }
-            @keyframes spin {
-                    100% {transform: rotate(360 deg);}
-            }
-            .win {
-                animation: spin 2s ease-in-out infinite;
- 
+                transform-origin: 50% 50%;
             }
         </style>
 
@@ -42,7 +36,8 @@ let progress = 0;          // 0-100
 let displayedProgress = 0; // 0-100
 let turtleVelocity = 0;
 let currentResult;
-const TIME_TO_LOSE_PROGRESS = 2; // in seconds
+const TIME_TO_LOSE_PROGRESS = 0.01; // in seconds
+const PROGRESS_TO_LOSE_PER_SECOND = 1;
 let lastLoss = 0;
 function getTask() {
     const x = Math.floor(Math.random() * 9.99) + 1;
@@ -118,8 +113,8 @@ function progressToX(p, e) {
 let lastAnimate = 0;
 function animate(time) {
     const losingTime = (time - lastLoss)/1000;
-    if (losingTime > TIME_TO_LOSE_PROGRESS) {
-        progress = Math.max(0, progress - Math.round(losingTime/TIME_TO_LOSE_PROGRESS));
+    if (losingTime > TIME_TO_LOSE_PROGRESS && progress < 100) {
+        progress = Math.max(0, progress - losingTime*PROGRESS_TO_LOSE_PER_SECOND);
         lastLoss = time;
     }
 
@@ -141,9 +136,11 @@ function animate(time) {
     const turtle = document.getElementById('turtle');
     turtle.style.top = `${50+(10*Math.cos(time/750))}px`;
     turtle.style.left = `${progressToX(displayedProgress, turtle)+(5*Math.cos(time/2322))}px`;
+    turtle.style.transform = `rotate(${4*Math.cos(Math.PI+time/2750)}deg)`;
     const star = document.getElementById('star');
     star.style.top = `${50+(5*Math.cos(time/1005))}px`;
     star.style.left = `${progressToX(100, star)+(5*Math.cos(time/2071))}px`;
+    star.style.transform = `rotate(${6*Math.cos(Math.PI+time/606)}deg)`;
     window.requestAnimationFrame(animate);
 }
 
