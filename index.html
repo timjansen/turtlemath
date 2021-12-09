@@ -110,15 +110,15 @@ function progressToX(p, e) {
         (document.getElementById('sea').offsetWidth - e.offsetWidth - 10);
 }
 
-let lastAnimate = 0;
-function animate(time) {
+function gameLogic(time, d) {
     const losingTime = (time - lastLoss)/1000;
     if (losingTime > TIME_TO_LOSE_PROGRESS && progress < 100) {
         progress = Math.max(0, progress - losingTime*PROGRESS_TO_LOSE_PER_SECOND);
         lastLoss = time;
     }
+}
 
-    const d = time - lastAnimate;
+function gameAnimate(time, d) {
     if (displayedProgress != progress) {
         if (progress > displayedProgress)
             turtleVelocity = (progress-displayedProgress)/500000;
@@ -133,6 +133,9 @@ function animate(time) {
     if (turtleVelocity < 0)
         displayedProgress = Math.max(displayedProgress + turtleVelocity * d, progress);
 
+}
+
+function gameRender(time, d) {
     const turtle = document.getElementById('turtle');
     turtle.style.top = `${50+(10*Math.cos(time/750))}px`;
     turtle.style.left = `${progressToX(displayedProgress, turtle)+(5*Math.cos(time/2322))}px`;
@@ -141,6 +144,17 @@ function animate(time) {
     star.style.top = `${50+(5*Math.cos(time/1005))}px`;
     star.style.left = `${progressToX(100, star)+(5*Math.cos(time/2071))}px`;
     star.style.transform = `rotate(${6*Math.cos(Math.PI+time/606)}deg)`;
+}
+
+
+
+let lastAnimate = 0;
+function animate(time) {
+    const d = time - lastAnimate;
+    gameLogic(time, d);
+    gameAnimate(time, d);
+    gameRender(time, d);
+
     window.requestAnimationFrame(animate);
 }
 
