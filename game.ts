@@ -1,5 +1,3 @@
-import { LEVELS } from "./levels";
-
 enum GameState {
     Play,
     NextLevel
@@ -14,15 +12,13 @@ let starRotation = 0;
 
 // GameState.Play
 const TIME_TO_LOSE_PROGRESS = 0.01; // in seconds
-const PROGRESS_TO_LOSE_PER_SECOND = [0.05, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 10];
-
-
 
 let lastLogicUpdate = 0;
 
-let progress = 0;                       // 0-100; in GameState.Play
-let displayedProgress = 0;              // 0-100; in GameState.Play
-let currentResult: string = '';         // the expected result; in GameState.Play
+let progress = 0;                       // 0-100
+let displayedProgress = 0;              // 0-100
+let currentTask: string = '';           // the current task
+let currentResult: string = '';         // the expected result
 let turtleVelocity = 0;
 
 // GameState.NextLevel
@@ -32,12 +28,22 @@ let newShell: HTMLImageElement;
 
 function easeInOutCubic(x: number): number {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-    }
+}
 
 function getTask(): [string,string] {
-    const x = Math.floor(Math.random() * 9.99) + 1;
-    const y = Math.floor(Math.random() * 9.99) + 1;
-    return [`${x} x ${y} =`, `${x * y}`];
+    const level = LEVELS[currentLevel % LEVELS.length];
+
+    if (level.op == '*') {
+        const x = Math.floor(Math.random() * (level.minNumberRange[1]-level.minNumberRange[0])) + level.minNumberRange[0];
+        const y = Math.floor(Math.random() * (level.maxNumberRange[1]-level.maxNumberRange[0])) + level.maxNumberRange[0];
+        const task = Math.random() < 0.5 ? `${x} x ${y} =` : `${y} x ${x} =`;
+        if (task == currentTask)
+            return getTask();
+        currentTask = task;
+        return [task, `${x * y}`];
+    }
+    else
+        throw new Error('Unknown operation ' + level.op);
 }
 
 function showTask(): void {
@@ -50,8 +56,6 @@ function showTask(): void {
 function play(): void {
     state = GameState.Play;
     progress = displayedProgress = turtleVelocity = 0;
-
-    document.getElementById('debug').innerText = `Play Level: ${currentLevel}`;
 
     showTask();
 }
@@ -86,7 +90,7 @@ function handleKeyPress(e: KeyboardEvent): boolean {
         else
             a.textContent = txt.substring(0, txt.length - 1);
     }
-    else if (e.code == 'Enter') {
+    else if (e.code == 'Enter' || e.code == 'NumpadEnter') {
         e.preventDefault();
         enterResult();
     }
@@ -118,9 +122,10 @@ function progressToX(p: number, e: HTMLElement): number {
 }
 
 function gameLogic(time: DOMHighResTimeStamp, d: number): void {
+    const level = LEVELS[currentLevel % LEVELS.length];
     const losingTime = (time - lastLogicUpdate)/1000;
     if (losingTime > TIME_TO_LOSE_PROGRESS && progress < 100) {
-        progress = Math.max(0, progress - losingTime*PROGRESS_TO_LOSE_PER_SECOND[currentLevel % PROGRESS_TO_LOSE_PER_SECOND.length]);
+        progress = Math.max(0, progress - losingTime*level.lostProgressPerSecond);
         lastLogicUpdate = time;
     }
 }
@@ -157,7 +162,6 @@ function nextLevel() {
     state = GameState.NextLevel;
     currentLevel++;
     nextLevelStartTime = undefined;
-    document.getElementById('debug').innerText = `Next Level: ${currentLevel}`;
 
     newShell = document.createElement('img');
     newShell.src = 'assets/shell-1.svg';
@@ -213,11 +217,11 @@ function animate(time: DOMHighResTimeStamp): void {
     window.requestAnimationFrame(animate);
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    document.addEventListener("keydown", handleKeyPress);
+function init(): void {
     showTask();
-});
+}
 
+document.addEventListener('DOMContentLoaded', init);
 window.requestAnimationFrame(animate);
-
+document.addEventListener("keydown", handleKeyPress);
 play();

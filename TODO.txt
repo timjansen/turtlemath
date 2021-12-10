@@ -1,0 +1,3 @@
+- keep correct results visible for a while, fade away
+- shake if wrong result entered
+- if player does not enter anything for x seconds, show hint (or result)

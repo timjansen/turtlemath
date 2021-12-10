@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
       "target": "es5",
-      "module": "amd",
-      "outFile": "game.js",
+      "module": "none",
       "sourceMap": true
     },
     "files": [

@@ -1,12 +1,4 @@
-type RangeDef = [ number, number ];
-type LevelDef = {
-    lostProgressPerSecond: number, // this many progress pct are lost per second
-    minNumberRange: RangeDef,           // the range for the lowest number in the task
-    maxNumberRange: RangeDef,           // the range for the upper number in the task
-    op: '+' | '-' | '*' | '/',
-};
-
-const LEVELS: LevelDef[] = [
+var LEVELS = [
     {
         lostProgressPerSecond: 0.05,
         minNumberRange: [1, 5],
@@ -116,4 +108,4 @@ const LEVELS: LevelDef[] = [
         op: '*'
     },
 ];
-
+//# sourceMappingURL=levels.js.map
