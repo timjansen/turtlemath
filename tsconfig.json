@@ -1,10 +1,12 @@
 {
     "compilerOptions": {
       "target": "es5",
-      "module": "commonjs",
+      "module": "amd",
+      "outFile": "game.js",
       "sourceMap": true
     },
     "files": [
+      "levels.ts",
       "game.ts"
     ]
 }

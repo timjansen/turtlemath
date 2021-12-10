@@ -1,3 +1,5 @@
+import { LEVELS } from "./levels";
+
 enum GameState {
     Play,
     NextLevel
@@ -13,6 +15,9 @@ let starRotation = 0;
 // GameState.Play
 const TIME_TO_LOSE_PROGRESS = 0.01; // in seconds
 const PROGRESS_TO_LOSE_PER_SECOND = [0.05, 0.2, 0.4, 0.6, 0.8, 1, 1.5, 2, 3, 10];
+
+
+
 let lastLogicUpdate = 0;
 
 let progress = 0;                       // 0-100; in GameState.Play
