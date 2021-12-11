@@ -148,7 +148,10 @@ function gameRender(time, d) {
     star.style.left = "".concat(progressToX(100, star) + (5 * Math.cos(time / 2071)), "px");
     star.style.transform = "rotate(".concat(6 * Math.cos(Math.PI + time / 606) + starRotation, "deg)");
     var hint = document.getElementById('hint');
-    hint.style.display = showHint ? 'block' : 'none';
+    if (showHint)
+        hint.classList.add('showHint');
+    else
+        hint.classList.remove('showHint');
 }
 function nextLevel() {
     state = GameState.NextLevel;

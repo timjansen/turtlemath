@@ -169,7 +169,10 @@ function gameRender(time: DOMHighResTimeStamp, d: number): void {
     star.style.transform = `rotate(${6*Math.cos(Math.PI+time/606) + starRotation}deg)`;
 
     const hint = document.getElementById('hint');
-    hint.style.display = showHint ? 'block' : 'none';
+    if (showHint)
+        hint.classList.add('showHint');
+    else
+        hint.classList.remove('showHint');
 }
 
 function nextLevel() {
