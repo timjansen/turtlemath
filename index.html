@@ -25,6 +25,9 @@
                 color: #fff;
                 height: 150px;
             }
+            #turtle img{
+                width: 120px;
+            }
             .sprite {
                 position: absolute;
                 transform-origin: center;
@@ -45,9 +48,27 @@
                 justify-content: center;
                 align-items: center;
             }
-            #debug {
-                font-size: 50%;
-                color: white;
+            blockquote.bubble { 
+                position: absolute;
+                right: -35px;
+                top: -30px;
+                width: 60px;
+                height: 60px;
+
+                background: url(assets/speech.svg); 
+                background-position: center;
+                background-repeat: no-repeat;
+
+                margin: 0;
+                padding-top: 3px;
+
+                font-size: 20px;;
+                text-align: center;
+                color: black;
+                border: 0;
+            }
+            #hint {
+                display: none;
             }
         </style>
 
@@ -57,7 +78,11 @@
 
     <body>
         <div id="sea">
-            <img id="turtle" class="sprite" src="assets/turtle-licensed-opt.svg" style="width: 120px; left: 2%; top: 25%;" />
+            <div id="turtle" class="sprite" >
+                <img src="assets/turtle-licensed-opt.svg" />
+                <blockquote id="hint" class="bubble">45</blockquote>
+            </div>
+
             <img id="star" class="sprite" src="assets/seastar-opt.svg" style="width: 110px; right: 50px; top: 25%;" />
 
             <div id="levelOverlay"><div id="levelOverlayContent"> </div></div>

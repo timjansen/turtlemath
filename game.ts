@@ -19,6 +19,9 @@ let progress = 0;                       // 0-100
 let displayedProgress = 0;              // 0-100
 let currentTask: string = '';           // the current task
 let currentResult: string = '';         // the expected result
+let currentHint: string = '';           // the current hint 
+let taskStartTime: number|undefined;    // when the current task started
+let showHint = false;                   // the current hinting status
 let turtleVelocity = 0;
 
 // GameState.NextLevel
@@ -40,17 +43,20 @@ function getTask(): [string,string] {
         if (task == currentTask)
             return getTask();
         currentTask = task;
-        return [task, `${x * y}`];
+        taskStartTime = undefined;
+        currentResult = currentHint = `${x * y}`;
+        showHint = false;
+        return [task, currentHint];
     }
     else
         throw new Error('Unknown operation ' + level.op);
 }
 
 function showTask(): void {
-    const [question, result] = getTask();
-    document.getElementById('question').innerText = question;
+    getTask();
+    document.getElementById('question').innerText = currentTask;
     document.getElementById('answer').innerText = '?';
-    currentResult = result;
+    document.getElementById('hint').innerText = currentHint;
 }
 
 function play(): void {
@@ -128,6 +134,12 @@ function gameLogic(time: DOMHighResTimeStamp, d: number): void {
         progress = Math.max(0, progress - losingTime*level.lostProgressPerSecond);
         lastLogicUpdate = time;
     }
+
+    if (!taskStartTime)
+        taskStartTime = time;
+    else {
+        showHint = (time - taskStartTime) / 1000 > level.timeToHint;
+    }
 }
 
 function gameAnimate(time: DOMHighResTimeStamp, d: number): void {
@@ -144,7 +156,6 @@ function gameAnimate(time: DOMHighResTimeStamp, d: number): void {
         displayedProgress = Math.min(displayedProgress + turtleVelocity * d, progress);
     if (turtleVelocity < 0)
         displayedProgress = Math.max(displayedProgress + turtleVelocity * d, progress);
-
 }
 
 function gameRender(time: DOMHighResTimeStamp, d: number): void {
@@ -156,6 +167,9 @@ function gameRender(time: DOMHighResTimeStamp, d: number): void {
     star.style.top = `${25+(5*Math.cos(time/1005))}px`;
     star.style.left = `${progressToX(100, star)+(5*Math.cos(time/2071))}px`;
     star.style.transform = `rotate(${6*Math.cos(Math.PI+time/606) + starRotation}deg)`;
+
+    const hint = document.getElementById('hint');
+    hint.style.display = showHint ? 'block' : 'none';
 }
 
 function nextLevel() {

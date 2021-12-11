@@ -14,6 +14,9 @@ var progress = 0; // 0-100
 var displayedProgress = 0; // 0-100
 var currentTask = ''; // the current task
 var currentResult = ''; // the expected result
+var currentHint = ''; // the current hint 
+var taskStartTime; // when the current task started
+var showHint = false; // the current hinting status
 var turtleVelocity = 0;
 // GameState.NextLevel
 var NEXT_LEVEL_DURATION = 4; // in seconds
@@ -31,16 +34,19 @@ function getTask() {
         if (task == currentTask)
             return getTask();
         currentTask = task;
-        return [task, "".concat(x * y)];
+        taskStartTime = undefined;
+        currentResult = currentHint = "".concat(x * y);
+        showHint = false;
+        return [task, currentHint];
     }
     else
         throw new Error('Unknown operation ' + level.op);
 }
 function showTask() {
-    var _a = getTask(), question = _a[0], result = _a[1];
-    document.getElementById('question').innerText = question;
+    getTask();
+    document.getElementById('question').innerText = currentTask;
     document.getElementById('answer').innerText = '?';
-    currentResult = result;
+    document.getElementById('hint').innerText = currentHint;
 }
 function play() {
     state = GameState.Play;
@@ -112,6 +118,11 @@ function gameLogic(time, d) {
         progress = Math.max(0, progress - losingTime * level.lostProgressPerSecond);
         lastLogicUpdate = time;
     }
+    if (!taskStartTime)
+        taskStartTime = time;
+    else {
+        showHint = (time - taskStartTime) / 1000 > level.timeToHint;
+    }
 }
 function gameAnimate(time, d) {
     if (displayedProgress != progress) {
@@ -136,6 +147,8 @@ function gameRender(time, d) {
     star.style.top = "".concat(25 + (5 * Math.cos(time / 1005)), "px");
     star.style.left = "".concat(progressToX(100, star) + (5 * Math.cos(time / 2071)), "px");
     star.style.transform = "rotate(".concat(6 * Math.cos(Math.PI + time / 606) + starRotation, "deg)");
+    var hint = document.getElementById('hint');
+    hint.style.display = showHint ? 'block' : 'none';
 }
 function nextLevel() {
     state = GameState.NextLevel;
