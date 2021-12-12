@@ -12,25 +12,18 @@ const LEVELS: LevelDef[] = [
         lostProgressPerSecond: 0.05,
         minNumberRange: [1, 5],
         maxNumberRange: [1, 5],
-        timeToHint: 5,
-        op: '*'
-    },
-    {
-        lostProgressPerSecond: 0.05,
-        minNumberRange: [1, 5],
-        maxNumberRange: [1, 5],
         timeToHint: 1,
         op: '*'
     },
     {
         lostProgressPerSecond: 0.05,
         minNumberRange: [1, 5],
-        maxNumberRange: [1, 10],
+        maxNumberRange: [1, 5],
         timeToHint: 5,
         op: '*'
     },
     {
-        lostProgressPerSecond: 0.1,
+        lostProgressPerSecond: 0.05,
         minNumberRange: [1, 5],
         maxNumberRange: [1, 10],
         timeToHint: 5,
@@ -94,9 +87,16 @@ const LEVELS: LevelDef[] = [
     },
     {
         lostProgressPerSecond: 0.1,
-        minNumberRange: [1, 10],
-        maxNumberRange: [1, 10],
-        timeToHint: 30,
+        minNumberRange: [6, 10],
+        maxNumberRange: [6, 10],
+        timeToHint: 15,
+        op: '*'
+    },
+    {
+        lostProgressPerSecond: 0.1,
+        minNumberRange: [7, 9],
+        maxNumberRange: [7, 9],
+        timeToHint: 15,
         op: '*'
     },
     {

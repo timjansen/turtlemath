@@ -13,11 +13,26 @@ var lastLogicUpdate = 0;
 var progress = 0; // 0-100
 var displayedProgress = 0; // 0-100
 var currentTask = ''; // the current task
+var displayedTask = ''; // the task currently displayed
 var currentResult = ''; // the expected result
 var currentHint = ''; // the current hint 
+var displayedHint = ''; // the hint currently displayed
+var currentInput = ''; // the current input. Empty if nothing.
+var toShowInput = '?';
+var displayedInput = '?'; // the currently displayed input. '?' if nothing.
+var inputShake = 0; // set to shake the wrong input
 var taskStartTime; // when the current task started
 var showHint = false; // the current hinting status
 var turtleVelocity = 0;
+var ResultState;
+(function (ResultState) {
+    ResultState[ResultState["Input"] = 0] = "Input";
+    ResultState[ResultState["Good"] = 1] = "Good";
+    ResultState[ResultState["Bad"] = 2] = "Bad";
+})(ResultState || (ResultState = {}));
+;
+var resultState = ResultState.Input;
+var resultStateStart = 0;
 // GameState.NextLevel
 var NEXT_LEVEL_DURATION = 4; // in seconds
 var nextLevelStartTime = 0;
@@ -25,85 +40,80 @@ var newShell;
 function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
-function getTask() {
+function createTask() {
     var level = LEVELS[currentLevel % LEVELS.length];
     if (level.op == '*') {
         var x = Math.floor(Math.random() * (level.minNumberRange[1] - level.minNumberRange[0])) + level.minNumberRange[0];
         var y = Math.floor(Math.random() * (level.maxNumberRange[1] - level.maxNumberRange[0])) + level.maxNumberRange[0];
         var task = Math.random() < 0.5 ? "".concat(x, " x ").concat(y, " =") : "".concat(y, " x ").concat(x, " =");
         if (task == currentTask)
-            return getTask();
+            return createTask();
         currentTask = task;
         taskStartTime = undefined;
         currentResult = currentHint = "".concat(x * y);
         showHint = false;
-        return [task, currentHint];
     }
     else
         throw new Error('Unknown operation ' + level.op);
 }
-function showTask() {
-    getTask();
-    document.getElementById('question').innerText = currentTask;
-    document.getElementById('answer').innerText = '?';
-    document.getElementById('hint').innerText = currentHint;
-}
 function play() {
     state = GameState.Play;
     progress = displayedProgress = turtleVelocity = 0;
-    showTask();
+    createTask();
 }
 function enterResult() {
-    if (document.getElementById('answer').textContent == currentResult) {
+    if (currentInput == currentResult) {
         progress = Math.min(100, progress + 5);
-        if (progress >= 100) {
+        if (progress >= 100)
             nextLevel();
-        }
         else
-            showTask();
+            createTask();
+        resultState = ResultState.Good;
     }
-    else
+    else {
         progress = Math.max(0, progress - 3);
-    var turleX = Math.max(0, Math.min(progress, 90));
-    document.getElementById('turtle').style.left = "".concat(turleX, "%");
-    document.getElementById('answer').textContent = '?';
+        toShowInput = currentInput;
+        resultState = ResultState.Bad;
+    }
+    currentInput = '';
+    resultStateStart = undefined;
 }
 function handleKeyPress(e) {
+    if (state != GameState.Play) {
+        e.preventDefault();
+        return false;
+    }
     if (e.code == 'Escape') {
         e.preventDefault();
-        document.getElementById('answer').textContent = '?';
+        resultState = ResultState.Input;
+        resultStateStart = undefined;
+        currentInput = '';
     }
     if (e.code == 'Backspace') {
         e.preventDefault();
-        var a = document.getElementById('answer');
-        var txt = a.textContent;
-        if (txt.length < 2)
-            a.textContent = '?';
-        else
-            a.textContent = txt.substring(0, txt.length - 1);
+        resultState = ResultState.Input;
+        resultStateStart = undefined;
+        currentInput = currentInput.substring(0, currentInput.length - 1);
     }
     else if (e.code == 'Enter' || e.code == 'NumpadEnter') {
         e.preventDefault();
         enterResult();
     }
     else if (e.key.charCodeAt(0) >= 48 && e.key.charCodeAt(0) <= 57) {
-        var digit = e.key.charCodeAt(0) - 48;
-        var a = document.getElementById('answer');
-        var txt = a.textContent;
-        if (txt == '?' || txt == '') {
-            a.textContent = digit.toString();
-        }
-        else if (txt.length == 1 || txt.length == 2) {
-            a.textContent = txt + digit;
-        }
-        else {
-            a.textContent = '?';
-        }
-        if (a.textContent == currentResult)
-            enterResult();
-        else if (a.textContent.length >= currentResult.length)
-            enterResult();
         e.preventDefault();
+        resultState = ResultState.Input;
+        resultStateStart = undefined;
+        var digit = e.key.charCodeAt(0) - 48;
+        if (currentInput == '') {
+            currentInput = digit.toString();
+        }
+        else if (currentInput.length < 5) {
+            currentInput += digit;
+        }
+        if (currentInput == currentResult)
+            enterResult();
+        else if (currentInput.length >= currentResult.length)
+            enterResult();
     }
     return false;
 }
@@ -137,6 +147,19 @@ function gameAnimate(time, d) {
         displayedProgress = Math.min(displayedProgress + turtleVelocity * d, progress);
     if (turtleVelocity < 0)
         displayedProgress = Math.max(displayedProgress + turtleVelocity * d, progress);
+    if (!resultStateStart)
+        resultStateStart = time;
+    if ((time - resultStateStart) / 1000 > 0.6 && resultState != ResultState.Input) {
+        resultState = ResultState.Input;
+        resultStateStart = time;
+        inputShake = 0;
+        currentInput = '';
+    }
+    else if (resultState == ResultState.Bad)
+        inputShake = Math.sin(time / 20) * 10;
+    else
+        inputShake = 0;
+    toShowInput = (resultState == ResultState.Input || resultState == ResultState.Good) ? (currentInput || '?') : (currentInput || toShowInput);
 }
 function gameRender(time, d) {
     var turtle = document.getElementById('turtle');
@@ -148,10 +171,18 @@ function gameRender(time, d) {
     star.style.left = "".concat(progressToX(100, star) + (5 * Math.cos(time / 2071)), "px");
     star.style.transform = "rotate(".concat(6 * Math.cos(Math.PI + time / 606) + starRotation, "deg)");
     var hint = document.getElementById('hint');
-    if (showHint)
+    if (showHint) {
         hint.classList.add('showHint');
+        if (displayedHint != currentHint)
+            document.getElementById('hint').textContent = displayedHint = currentHint;
+    }
     else
         hint.classList.remove('showHint');
+    if (displayedTask != currentTask)
+        document.getElementById('question').textContent = displayedTask = currentTask;
+    if (displayedInput != toShowInput)
+        document.getElementById('answer').textContent = displayedInput = toShowInput;
+    document.getElementById('task').style.paddingLeft = "".concat(inputShake, "px");
 }
 function nextLevel() {
     state = GameState.NextLevel;
@@ -164,7 +195,7 @@ function nextLevel() {
     newShell.style.top = '0';
     newShell.style.right = "".concat(10 + 35 * currentLevel, "px");
     document.getElementById('sea').appendChild(newShell);
-    document.getElementById('levelOverlayContent').innerText = "Level ".concat(currentLevel);
+    document.getElementById('levelOverlayContent').innerText = "Level ".concat(currentLevel + 1);
     document.getElementById('levelOverlay').style.display = undefined;
 }
 function nextLevelControl(time, d) {
@@ -203,7 +234,7 @@ function animate(time) {
     window.requestAnimationFrame(animate);
 }
 function init() {
-    showTask();
+    createTask();
 }
 document.addEventListener('DOMContentLoaded', init);
 window.requestAnimationFrame(animate);
