@@ -53,15 +53,26 @@ function easeInOutCubic(x: number): number {
 function createTask(): void {
     const level = LEVELS[currentLevel % LEVELS.length];
 
-    if (level.op == '*') {
+    if (level.op == '*' || level.op == '/') {
         const x = Math.floor(Math.random() * (level.minNumberRange[1]-level.minNumberRange[0])) + level.minNumberRange[0];
         const y = Math.floor(Math.random() * (level.maxNumberRange[1]-level.maxNumberRange[0])) + level.maxNumberRange[0];
-        const task = Math.random() < 0.5 ? `${x} x ${y} =` : `${y} x ${x} =`;
-        if (task == currentTask)
-            return createTask();
-        currentTask = task;
+        if (level.op == '*') {
+            const task = Math.random() < 0.5 ? `${x} x ${y} =` : `${y} x ${x} =`;
+            if (task == currentTask)
+                return createTask();
+            currentTask = task;
+            currentResult = currentHint = `${x * y}`;
+        }
+        else {
+            const r = x*y;
+            const useY = Math.random() < 0.5;
+            const task = useY ? `${r} : ${y} =` : `${r} : ${x} =`;
+            if (task == currentTask)
+                return createTask();
+            currentTask = task;
+            currentResult = currentHint = useY ? `${x}` : `${y}`;
+        }
         taskStartTime = undefined;
-        currentResult = currentHint = `${x * y}`;
         showHint = false;
     }
     else

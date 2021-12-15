@@ -42,15 +42,26 @@ function easeInOutCubic(x) {
 }
 function createTask() {
     var level = LEVELS[currentLevel % LEVELS.length];
-    if (level.op == '*') {
+    if (level.op == '*' || level.op == '/') {
         var x = Math.floor(Math.random() * (level.minNumberRange[1] - level.minNumberRange[0])) + level.minNumberRange[0];
         var y = Math.floor(Math.random() * (level.maxNumberRange[1] - level.maxNumberRange[0])) + level.maxNumberRange[0];
-        var task = Math.random() < 0.5 ? "".concat(x, " x ").concat(y, " =") : "".concat(y, " x ").concat(x, " =");
-        if (task == currentTask)
-            return createTask();
-        currentTask = task;
+        if (level.op == '*') {
+            var task = Math.random() < 0.5 ? "".concat(x, " x ").concat(y, " =") : "".concat(y, " x ").concat(x, " =");
+            if (task == currentTask)
+                return createTask();
+            currentTask = task;
+            currentResult = currentHint = "".concat(x * y);
+        }
+        else {
+            var r = x * y;
+            var useY = Math.random() < 0.5;
+            var task = useY ? "".concat(r, " : ").concat(y, " =") : "".concat(r, " : ").concat(x, " =");
+            if (task == currentTask)
+                return createTask();
+            currentTask = task;
+            currentResult = currentHint = useY ? "".concat(x) : "".concat(y);
+        }
         taskStartTime = undefined;
-        currentResult = currentHint = "".concat(x * y);
         showHint = false;
     }
     else

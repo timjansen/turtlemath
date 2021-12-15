@@ -4,6 +4,13 @@ var LEVELS = [
         minNumberRange: [1, 5],
         maxNumberRange: [1, 5],
         timeToHint: 1,
+        op: '/'
+    },
+    {
+        lostProgressPerSecond: 0.05,
+        minNumberRange: [1, 5],
+        maxNumberRange: [1, 5],
+        timeToHint: 1,
         op: '*'
     },
     {
