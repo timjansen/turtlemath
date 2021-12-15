@@ -74,6 +74,11 @@
                 opacity: 1;
                 transition: opacity 2s ease-out;
             }
+            #levelOverview .description {
+                display: inline-block;
+                font-weight: 800;
+                width: 5rem;
+            }
 
 
         </style>
@@ -94,6 +99,12 @@
             <div id="levelOverlay"><div id="levelOverlayContent"> </div></div>
 
         </div>
+
         <div id="task"><span id="question">7 x 8 =</span> <span id="answer">?</span></div>
+
+        <div id="levelOverview">
+            <div class="op multiplication"><span class="description">a x b</span> <span class="levels">1</span></div>
+            <div class="op division"><span class="description">a : b</span> <span class="levels">1</span></div>
+        </div>
     </body>
 </html>

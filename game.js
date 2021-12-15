@@ -3,8 +3,10 @@ var GameState;
     GameState[GameState["Play"] = 0] = "Play";
     GameState[GameState["NextLevel"] = 1] = "NextLevel";
 })(GameState || (GameState = {}));
+var storedState = JSON.parse(window.localStorage.getItem('state') || JSON.stringify({ achievements: { multiplication: 1, division: 1 }, levelType: 'multipliciation' }));
 var state = GameState.Play;
-var currentLevel = 0; // -> number of shells
+var currentLevel = 1; // -> number of shells-1
+var levelType = 'multiplication';
 // Render
 var starRotation = 0;
 // GameState.Play
@@ -36,12 +38,59 @@ var resultStateStart = 0;
 // GameState.NextLevel
 var NEXT_LEVEL_DURATION = 4; // in seconds
 var nextLevelStartTime = 0;
-var newShell;
+var newShells = [];
+function setAttrs(e, attributeMap) {
+    if (attributeMap)
+        for (var name_1 in attributeMap)
+            e.setAttribute(name_1, attributeMap[name_1]);
+}
+function newElem(name, attributeMap, children) {
+    var e = document.createElement(name);
+    setAttrs(e, attributeMap);
+    if (Array.isArray(children))
+        for (var _i = 0, children_1 = children; _i < children_1.length; _i++) {
+            var child = children_1[_i];
+            e.appendChild(child);
+        }
+    else if (children)
+        e.appendChild(children);
+    return e;
+}
+function newTxt(text) {
+    return document.createTextNode(text);
+}
+function removeAllChildren(e) {
+    while (e.firstChild)
+        e.removeChild(e.firstChild);
+}
+function storeState() {
+    window.localStorage.setItem('state', JSON.stringify(storedState));
+    return storedState;
+}
+function selectLevel(e) {
+    var level = parseInt(e.target.getAttribute('data-level-number'));
+    nextLevel(level);
+}
+function updateLevelSelector() {
+    var levelOverview = document.getElementById('levelOverview');
+    for (var _i = 0, _a = Object.keys(storedState.achievements); _i < _a.length; _i++) {
+        var type = _a[_i];
+        var levelList = levelOverview.querySelector(".".concat(type, " .levels"));
+        removeAllChildren(levelList);
+        for (var i = 1; i <= storedState.achievements[type]; i++) {
+            var a = newElem('a', { href: '#', 'data-level-number': i.toString() }, newTxt(i.toString()));
+            a.classList.add('levelLink');
+            levelList.append(a);
+            levelList.append(newTxt(' '));
+            a.addEventListener('click', selectLevel);
+        }
+    }
+}
 function easeInOutCubic(x) {
     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 function createTask() {
-    var level = LEVELS[currentLevel % LEVELS.length];
+    var level = LEVELS[levelType][(currentLevel - 1) % LEVELS[levelType].length];
     if (level.op == '*' || level.op == '/') {
         var x = Math.floor(Math.random() * (level.minNumberRange[1] - level.minNumberRange[0])) + level.minNumberRange[0];
         var y = Math.floor(Math.random() * (level.maxNumberRange[1] - level.maxNumberRange[0])) + level.maxNumberRange[0];
@@ -133,7 +182,7 @@ function progressToX(p, e) {
         (document.getElementById('sea').offsetWidth - e.offsetWidth - 10);
 }
 function gameLogic(time, d) {
-    var level = LEVELS[currentLevel % LEVELS.length];
+    var level = LEVELS[levelType][(currentLevel - 1) % LEVELS[levelType].length];
     var losingTime = (time - lastLogicUpdate) / 1000;
     if (losingTime > TIME_TO_LOSE_PROGRESS && progress < 100) {
         progress = Math.max(0, progress - losingTime * level.lostProgressPerSecond);
@@ -195,19 +244,40 @@ function gameRender(time, d) {
         document.getElementById('answer').textContent = displayedInput = toShowInput;
     document.getElementById('task').style.paddingLeft = "".concat(inputShake, "px");
 }
-function nextLevel() {
+function nextLevel(level) {
     state = GameState.NextLevel;
-    currentLevel++;
+    currentLevel = level || (currentLevel + 1);
     nextLevelStartTime = undefined;
-    newShell = document.createElement('img');
-    newShell.src = 'assets/shell-1.svg';
-    newShell.classList.add('sprite');
-    newShell.classList.add('shell');
-    newShell.style.top = '0';
-    newShell.style.right = "".concat(10 + 35 * currentLevel, "px");
-    document.getElementById('sea').appendChild(newShell);
-    document.getElementById('levelOverlayContent').innerText = "Level ".concat(currentLevel + 1);
+    if (level) {
+        newShells = [];
+        for (var i = 1; i < currentLevel; i++) {
+            var newShell = document.createElement('img');
+            newShell.src = 'assets/shell-1.svg';
+            newShell.classList.add('sprite');
+            newShell.classList.add('shell');
+            newShell.style.top = '0';
+            newShell.style.right = "".concat(35 * i - 25, "px");
+            document.getElementById('sea').appendChild(newShell);
+            newShells.push(newShell);
+        }
+    }
+    else {
+        var newShell = document.createElement('img');
+        newShell.src = 'assets/shell-1.svg';
+        newShell.classList.add('sprite');
+        newShell.classList.add('shell');
+        newShell.style.top = '0';
+        newShell.style.right = "".concat(35 * currentLevel - 25, "px");
+        newShells = [newShell];
+        document.getElementById('sea').appendChild(newShell);
+    }
+    document.getElementById('levelOverlayContent').innerText = "Level ".concat(currentLevel);
     document.getElementById('levelOverlay').style.display = undefined;
+    if (!level && storedState.achievements[levelType] < currentLevel) {
+        storedState.achievements[levelType] = currentLevel;
+        storeState();
+        updateLevelSelector();
+    }
 }
 function nextLevelControl(time, d) {
     if (nextLevelStartTime == undefined)
@@ -220,13 +290,14 @@ function nextLevelControl(time, d) {
     }
     starRotation = passed * 360;
     displayedProgress = 100 - easeInOutCubic(passed) * 100;
-    newShell.style.top = "".concat(-75 + easeInOutCubic(passed) * 75, "px");
+    newShells.forEach(function (it) { return it.style.top = "".concat(-75 + easeInOutCubic(passed) * 75, "px"); });
     if (passed < 0.2)
         document.getElementById('levelOverlay').style.opacity = "".concat(passed / 0.2);
     else if (passed > 0.8)
         document.getElementById('levelOverlay').style.opacity = "".concat(1 - (passed - 0.8) / 0.2);
     else
         document.getElementById('levelOverlay').style.opacity = '1';
+    document.getElementById('levelOverlay').style.display = 'block';
 }
 var lastAnimate = 0;
 function animate(time) {
@@ -246,6 +317,7 @@ function animate(time) {
 }
 function init() {
     createTask();
+    updateLevelSelector();
 }
 document.addEventListener('DOMContentLoaded', init);
 window.requestAnimationFrame(animate);
