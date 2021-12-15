@@ -69,7 +69,9 @@ function storeState() {
 }
 function selectLevel(e) {
     var level = parseInt(e.target.getAttribute('data-level-number'));
-    nextLevel(level);
+    var type = e.target.getAttribute('data-level-type');
+    storedState.levelType = type;
+    nextLevel(level, type);
 }
 function updateLevelSelector() {
     var levelOverview = document.getElementById('levelOverview');
@@ -78,7 +80,7 @@ function updateLevelSelector() {
         var levelList = levelOverview.querySelector(".".concat(type, " .levels"));
         removeAllChildren(levelList);
         for (var i = 1; i <= storedState.achievements[type]; i++) {
-            var a = newElem('a', { href: '#', 'data-level-number': i.toString() }, newTxt(i.toString()));
+            var a = newElem('a', { href: '#', 'data-level-number': i.toString(), 'data-level-type': type }, newTxt(i.toString()));
             a.classList.add('levelLink');
             levelList.append(a);
             levelList.append(newTxt(' '));
@@ -244,7 +246,7 @@ function gameRender(time, d) {
         document.getElementById('answer').textContent = displayedInput = toShowInput;
     document.getElementById('task').style.paddingLeft = "".concat(inputShake, "px");
 }
-function nextLevel(level) {
+function nextLevel(level, type) {
     state = GameState.NextLevel;
     currentLevel = level || (currentLevel + 1);
     nextLevelStartTime = undefined;
@@ -273,8 +275,9 @@ function nextLevel(level) {
     }
     document.getElementById('levelOverlayContent').innerText = "Level ".concat(currentLevel);
     document.getElementById('levelOverlay').style.display = undefined;
-    if (!level && storedState.achievements[levelType] < currentLevel) {
-        storedState.achievements[levelType] = currentLevel;
+    if (storedState.achievements[levelType] < currentLevel || levelType != type) {
+        storedState.achievements[levelType] = Math.max(storedState.achievements[levelType], currentLevel);
+        storedState.levelType = type;
         storeState();
         updateLevelSelector();
     }

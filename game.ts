@@ -90,7 +90,10 @@ function storeState() {
 
 function selectLevel(e) {
     const level = parseInt(e.target.getAttribute('data-level-number'));
-    nextLevel(level);
+    const type = e.target.getAttribute('data-level-type');
+    
+    storedState.levelType = type;
+    nextLevel(level, type);
 }
 
 function updateLevelSelector() {
@@ -99,7 +102,7 @@ function updateLevelSelector() {
         const levelList = levelOverview.querySelector(`.${type} .levels`);
         removeAllChildren(levelList);
         for (let i = 1; i <= storedState.achievements[type]; i++) {
-            const a = newElem('a', {href: '#', 'data-level-number': i.toString()}, newTxt(i.toString()));
+            const a = newElem('a', {href: '#', 'data-level-number': i.toString(), 'data-level-type': type}, newTxt(i.toString()));
             a.classList.add('levelLink');
             levelList.append(a);
             levelList.append(newTxt(' '));
@@ -287,7 +290,7 @@ function gameRender(time: DOMHighResTimeStamp, d: number): void {
     document.getElementById('task').style.paddingLeft = `${inputShake}px`;
 }
 
-function nextLevel(level?: number) {
+function nextLevel(level?: number, type?: 'multiplication'|'division') {
     state = GameState.NextLevel;
     currentLevel = level || (currentLevel+1);
     nextLevelStartTime = undefined;
@@ -319,8 +322,9 @@ function nextLevel(level?: number) {
     document.getElementById('levelOverlayContent').innerText = `Level ${currentLevel}`;
     document.getElementById('levelOverlay').style.display = undefined;
 
-    if (!level && storedState.achievements[levelType] < currentLevel) {
-        storedState.achievements[levelType] = currentLevel;
+    if (storedState.achievements[levelType] < currentLevel || levelType!=type) {
+        storedState.achievements[levelType] = Math.max(storedState.achievements[levelType], currentLevel);
+        storedState.levelType = type;
         storeState();
         updateLevelSelector();
     }
